@@ -7,21 +7,21 @@ export const exportOpen = ref(false)
 export const openExport = () => { exportOpen.value = true }
 export const closeExport = () => { exportOpen.value = false }
 
-// Во сколько раз растеризуем PNG плотнее, чем на экране (как retina-скриншот): пропорции
-// те же самые, что видно на странице, но пикселей больше — края и подписи чётче.
+// Во сколько раз растеризуем PNG плотнее, чем на экране (как retina-скриншот): холст крупнее,
+// но сам SVG (и, значит, пропорции подписей к мебели) строим как для liveScale — растягиваем
+// вектор на отрисовке в canvas, а не через s, иначе подписи (фиксированный размер в px, см. mkK) станут мельче.
 const RASTER_QUALITY = 3
 
 /**
  * Самодостаточный SVG чертежа — та же тема, сетка и размер подписей, что и на экране.
- * s — масштаб растра (px на см). Обычно это текущий масштаб плана на странице (из features/zoom-plan),
- * умноженный на RASTER_QUALITY, чтобы мебель и подписи были в тех же пропорциях, что в интерактивном
- * виде, но с более плотной растеризацией. Ограничиваем сверху только на случай экстремального зума,
- * чтобы не растеризовать в канвас за пределами разумного.
+ * liveScale — текущий масштаб плана на странице (px на см, из features/zoom-plan): используем его же
+ * для экспорта, чтобы мебель и подписи были пиксель-в-пиксель такими же, как в интерактивном виде.
+ * Ограничиваем сверху только на случай экстремального зума, чтобы не растеризовать в канвас за пределами разумного.
  */
-export function exportSVG(s) {
+export function exportSVG(liveScale) {
   const st = plan.value, P = palette.value
   const p = padsCm(st), cw = st.room.w + p.l + p.r, ch = st.room.h + p.t + p.b
-  s = clamp(s, 0.05, 10000 / Math.max(cw, ch))
+  const s = clamp(liveScale, 0.05, 6000 / Math.max(cw, ch))
   const k = mkK(s), vb = viewBox(st, s), titleH = +(70 / s).toFixed(2)
   const inner = planMarkup(st, {
     pal: P, s, interactive: false, sel: null, issues: computeIssues(st), grid: settings.grid, labels: settings.labels, dims: false, guides: null,
@@ -44,7 +44,7 @@ function fileSlug() {
 
 export async function downloadPNG(liveScale) {
   try {
-    const r = exportSVG(liveScale * RASTER_QUALITY)
+    const r = exportSVG(liveScale)
     const img = new Image()
     await new Promise((res, rej) => {
       img.onload = res
@@ -52,8 +52,10 @@ export async function downloadPNG(liveScale) {
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(r.svg)
     })
     const c = document.createElement('canvas')
-    c.width = r.w
-    c.height = r.h
+    // SVG — вектор, поэтому отрисовка в увеличенный canvas даёт чёткую (не мыльную) картинку,
+    // а не блочное растягивание уже готового растра.
+    c.width = r.w * RASTER_QUALITY
+    c.height = r.h * RASTER_QUALITY
     const ctx = c.getContext('2d')
     ctx.fillStyle = r.bg
     ctx.fillRect(0, 0, c.width, c.height)
