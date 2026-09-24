@@ -13,7 +13,7 @@ function onKey(e) {
 onMounted(() => {
   unregister = registerModal()
   document.addEventListener('keydown', onKey)
-  const f = dialog.value && dialog.value.querySelector('.btn')
+  const f = dialog.value && (dialog.value.querySelector('[autofocus]') || dialog.value.querySelector('.btn'))
   if (f) f.focus()
 })
 onBeforeUnmount(() => {

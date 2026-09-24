@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue'
-import { isDark } from '@/shared/lib'
-import { PAL, STORE_KEY } from '../config/catalog.js'
+import { isDark, uid } from '@/shared/lib'
+import { KINDS, PAL, STORE_KEY } from '../config/catalog.js'
 import savedLayout from '../config/saved-layout.json'
 import { defaultState, normalize, validState } from '../lib/state.js'
-import { computeIssues } from '../lib/geometry.js'
+import { computeIssues, freeSpot } from '../lib/geometry.js'
 
 /* ---------- загрузка ---------- */
 // Черновик из localStorage важнее опубликованной расстановки, только если он новее неё.
@@ -44,6 +44,25 @@ export function select(t, id) {
 }
 export function clearSelection() {
   selection.value = null
+}
+
+/**
+ * Поставить новый предмет в ближайшее к центру свободное место и выбрать его.
+ * spec: {kind, name?, w?, d?, tone?}; недостающее берётся из KINDS[kind].
+ * Возвращает {item, ok}; ok = false, если свободного места не нашлось.
+ */
+export function addItem(spec) {
+  const K = KINDS[spec.kind]
+  const w = spec.w || K.w
+  const it = {
+    id: uid(), kind: spec.kind, name: String(spec.name || K.label).slice(0, 60),
+    w, d: K.round ? w : spec.d || K.d, x: 0, y: 0, rot: 0, tone: spec.tone || K.tone, locked: false,
+  }
+  const ok = freeSpot(plan.value, it)
+  plan.value.items.push(it)
+  select('i', it.id)
+  commit()
+  return { item: it, ok }
 }
 
 /** Удалить выбранный предмет или проём. */

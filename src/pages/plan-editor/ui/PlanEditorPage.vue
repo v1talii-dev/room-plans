@@ -5,6 +5,7 @@ import { PlanCanvas } from '@/widgets/plan-canvas'
 import { SidePanel } from '@/widgets/side-panel'
 import { ExportDialog, exportOpen } from '@/features/export-layout'
 import { VariantDialog, pendingVariant } from '@/features/apply-variant'
+import { CreateItemDialog, createOpen } from '@/features/create-item'
 import { useHotkeys } from '../lib/useHotkeys.js'
 
 useHotkeys()
@@ -19,6 +20,7 @@ useHotkeys()
     </main>
     <ExportDialog v-if="exportOpen" />
     <VariantDialog v-else-if="pendingVariant" />
+    <CreateItemDialog v-else-if="createOpen" />
     <AppToast />
   </div>
 </template>

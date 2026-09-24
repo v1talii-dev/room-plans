@@ -32,7 +32,7 @@ Layers in `src/`. A layer imports only from layers below it, and only through a 
   - `lib/markup.js`: SVG string rendering (`planMarkup`, `viewBox`).
   - `model/plan.js`: the reactive `plan` ref, `selection`, `guides`, `issues`, `palette`, and undo/redo history (`commit`, `commitSoon`, `undo`, `redo`, `replacePlan`, `removeSelected`).
 - **entities/settings/** — display/snap toggles persisted in localStorage (`nail-room-plan-ui-v1`).
-- **features/** — one user action per slice: `history`, `toggle-display`, `zoom-plan` (owns viewport/svg refs, `zoom`, computed `scale`, `setZoom`), `add-item`, `edit-item`, `edit-opening`, `edit-room`, `select-object`, `export-layout` (PNG/SVG 1:50/JSON), `apply-variant`.
+- **features/** — one user action per slice: `history`, `toggle-display`, `zoom-plan` (owns viewport/svg refs, `zoom`, computed `scale`, `setZoom`), `add-item`, `create-item` (custom items; optional templates saved in localStorage `nail-room-plan-templates-v1` via `entities/plan/model/templates.js`), `edit-item`, `edit-opening`, `edit-room`, `select-object`, `export-layout` (PNG/SVG 1:50/JSON), `apply-variant`.
 - **widgets/** — `toolbar`, `plan-canvas` (SVG + pointer drag/resize/rotate/pan/pinch in `model/usePlanPointer.js`, plus the status bar), `side-panel`.
 - **pages/plan-editor/** — composes the widgets and dialogs; keyboard shortcuts live in `lib/useHotkeys.js`.
 - **app/** — `createApp`, global styles (`styles/index.css`).

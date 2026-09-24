@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { selectedItem, selectedOpening, selection } from '@/entities/plan'
 import { AddItemGrid } from '@/features/add-item'
+import { CreateItemButton } from '@/features/create-item'
 import { ItemEditor } from '@/features/edit-item'
 import { OpeningEditor } from '@/features/edit-opening'
 import { RoomSettings } from '@/features/edit-room'
@@ -32,6 +33,7 @@ watch(selKey, (key, prev) => {
     <section class="sec">
       <h2>Добавить предмет</h2>
       <AddItemGrid />
+      <CreateItemButton />
     </section>
     <section class="sec">
       <h2>Комната</h2>

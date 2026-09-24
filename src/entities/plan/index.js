@@ -8,6 +8,7 @@ export {
 export { planMarkup, padsCm, viewBox, mkK } from './lib/markup.js'
 export {
   plan, selection, guides, issues, palette,
-  getItem, getOpening, selectedItem, selectedOpening, select, clearSelection, removeSelected,
+  getItem, getOpening, selectedItem, selectedOpening, select, clearSelection, addItem, removeSelected,
   snapshot, canUndo, canRedo, commit, commitSoon, undo, redo, restore, replacePlan,
 } from './model/plan.js'
+export { templates, addTemplate, removeTemplate, templateSpec } from './model/templates.js'
