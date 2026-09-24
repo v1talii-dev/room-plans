@@ -1,12 +1,14 @@
 import { computed, nextTick, reactive, ref, shallowRef } from 'vue'
 import { clamp } from '@/shared/lib'
 import { PADPX, padsCm, plan } from '@/entities/plan'
+import { settings } from '@/entities/settings'
 
 /** DOM-узлы области просмотра и SVG — регистрирует холст плана. */
 export const viewportEl = shallowRef(null)
 export const svgEl = shallowRef(null)
 export const viewportSize = reactive({ w: 0, h: 0 })
-export const zoom = ref(1)
+/** Уровень масштаба; стартует с последнего сохранённого значения и сохраняется при изменении. */
+export const zoom = ref(settings.zoom)
 
 /** Пикселей на сантиметр: «вписать в экран» × zoom. */
 export const scale = computed(() => {
@@ -26,6 +28,7 @@ export async function setZoom(z, cx, cy) {
   if (cx == null) { cx = r.left + r.width / 2; cy = r.top + r.height / 2 }
   const m = svg.getScreenCTM(), before = m ? new DOMPoint(cx, cy).matrixTransform(m.inverse()) : null
   zoom.value = z
+  settings.zoom = z
   await nextTick()
   if (!before) return
   const m2 = svg.getScreenCTM()
@@ -37,6 +40,7 @@ export async function setZoom(z, cx, cy) {
 
 export async function zoomFit() {
   zoom.value = 1
+  settings.zoom = 1
   await nextTick()
   const vp = viewportEl.value
   if (vp) { vp.scrollLeft = 0; vp.scrollTop = 0 }

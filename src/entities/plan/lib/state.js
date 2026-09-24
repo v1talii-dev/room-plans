@@ -8,36 +8,41 @@ export function defaultState(v) {
     Object.assign({ id: 'd' + ++c, kind, name, w: KINDS[kind].w, d: KINDS[kind].d, x, y, rot, tone: KINDS[kind].tone, locked: false }, extra || {})
   const base = {
     room: { w: 310, h: 570 },
-    openings: [{ id: 'door1', type: 'door', wall: 'right', offset: 478, width: 90, hinge: 'end', swing: 'in' }],
+    openings: [{ id: 'door1', type: 'door', wall: 'right', offset: 478, width: 90, hinge: 'end', swing: 'out' }],
   }
   if (v === 'a') {
     base.items = [
       it('table', 'Стол 1', 60, 100, 0), it('table', 'Стол 2', 250, 100, 0),
-      it('master', 'Стул мастера 1', 60, 42, 0), it('master', 'Стул мастера 2', 250, 42, 0),
-      it('client', 'Стул клиента 1', 60, 155, 180), it('client', 'Стул клиента 2', 250, 155, 180),
+      it('master', 'Стул 1', 60, 42, 0), it('master', 'Стул 2', 250, 42, 0),
+      it('client', 'Стул 3', 60, 155, 180), it('client', 'Стул 4', 250, 155, 180),
       it('dresser', 'Комод большой', 19.5, 500, 270), it('cabinet', 'Шкафчик', 295, 220, 90),
       it('dresser', 'Комод малый', 155, 17.5, 0, { w: 70, d: 35 }), it('rack', 'Вешалка', 295, 435, 90),
       it('cooler', 'Кулер', 16.5, 220, 270),
       it('armchair', 'Кресло 1', 73.5, 535.5, 180), it('coffee', 'Журнальный столик', 130, 535.5, 0), it('armchair', 'Кресло 2', 186.5, 535.5, 180),
       it('table', 'Стол 3', 60, 340, 0), it('table', 'Стол 4', 250, 340, 0),
-      it('master', 'Стул мастера 3', 60, 282.5, 0), it('master', 'Стул мастера 4', 250, 282.5, 0),
-      it('client', 'Стул клиента 3', 60, 395, 180), it('client', 'Стул клиента 4', 250, 395, 180),
+      it('master', 'Стул 5', 60, 282.5, 0), it('master', 'Стул 6', 250, 282.5, 0),
+      it('client', 'Стул 7', 60, 395, 180), it('client', 'Стул 8', 250, 395, 180),
     ]
   } else {
     base.items = [
       it('table', 'Стол 1', 60, 130, 0), it('table', 'Стол 2', 250, 130, 0),
-      it('master', 'Стул мастера 1', 60, 72.5, 0), it('master', 'Стул мастера 2', 250, 72.5, 0),
-      it('client', 'Стул клиента 1', 60, 185, 180), it('client', 'Стул клиента 2', 250, 185, 180),
+      it('master', 'Стул 1', 60, 72.5, 0), it('master', 'Стул 2', 250, 72.5, 0),
+      it('client', 'Стул 3', 60, 185, 180), it('client', 'Стул 4', 250, 185, 180),
       it('dresser', 'Комод большой', 60, 19.5, 0), it('cabinet', 'Шкафчик', 297.75, 15, 0),
       it('dresser', 'Комод малый', 225, 17.5, 0, { w: 70, d: 35 }), it('rack', 'Вешалка', 295, 435, 90),
       it('cooler', 'Кулер', 202, 552.5, 180),
       it('armchair', 'Кресло 1', 35.5, 535.5, 180), it('coffee', 'Журнальный столик', 93, 535.5, 0), it('armchair', 'Кресло 2', 150.5, 535.5, 180),
       it('table', 'Стол 3', 60, 360, 0), it('table', 'Стол 4', 250, 360, 0),
-      it('master', 'Стул мастера 3', 60, 302.5, 0), it('master', 'Стул мастера 4', 250, 302.5, 0),
-      it('client', 'Стул клиента 3', 60, 415, 180), it('client', 'Стул клиента 4', 250, 415, 180),
+      it('master', 'Стул 5', 60, 302.5, 0), it('master', 'Стул 6', 250, 302.5, 0),
+      it('client', 'Стул 7', 60, 415, 180), it('client', 'Стул 8', 250, 415, 180),
     ]
   }
   return base
+}
+
+/** Пустая комната без мебели — стартовое состояние для вновь созданных комнат. */
+export function emptyRoomState(w, h) {
+  return { room: { w: w || 300, h: h || 400 }, items: [], openings: [] }
 }
 
 export function wallLenOf(st, wall) {

@@ -1,5 +1,8 @@
 import { num, sizeOf, uid } from '@/shared/lib'
-import { KINDS, clampInside, commit, ext, freeSpot, plan, resizeAnchored, select, selectedItem } from '@/entities/plan'
+import {
+  KINDS, clampInside, commit, ext, freeSpot, getItem, isMultiActive, multiSelection,
+  plan, resizeAnchored, select, selectedItem, selection,
+} from '@/entities/plan'
 
 /** Применить значение поля панели к выбранному предмету. */
 export function applyItemField(f, raw) {
@@ -35,7 +38,18 @@ export function setTone(tone) {
   commit()
 }
 
+/** Повернуть выбранный предмет, либо каждый предмет группы, если активно групповое выделение. */
 export function rotateSelected(deg) {
+  if (isMultiActive.value) {
+    for (const id of multiSelection.value) {
+      const it = getItem(id)
+      if (!it || it.locked) continue
+      it.rot = (((it.rot + deg) % 360) + 360) % 360
+      clampInside(plan.value.room, it)
+    }
+    commit()
+    return
+  }
   const it = selectedItem.value
   if (!it || it.locked) return
   it.rot = (((it.rot + deg) % 360) + 360) % 360
@@ -43,12 +57,25 @@ export function rotateSelected(deg) {
   commit()
 }
 
-export function duplicateSelected() {
-  const src = selectedItem.value
-  if (!src) return
+function duplicateOne(src) {
   const it = { ...src, id: uid(), locked: false }
   freeSpot(plan.value, it, [src.x + 30, src.y + 30])
   plan.value.items.push(it)
+  return it
+}
+/** Дублировать выбранный предмет, либо всю группу — с выделением копий. */
+export function duplicateSelected() {
+  if (isMultiActive.value) {
+    const copies = multiSelection.value.map(getItem).filter(Boolean).map(duplicateOne)
+    if (!copies.length) return
+    multiSelection.value = copies.map((c) => c.id)
+    selection.value = { t: 'i', id: copies[copies.length - 1].id }
+    commit()
+    return
+  }
+  const src = selectedItem.value
+  if (!src) return
+  const it = duplicateOne(src)
   select('i', it.id)
   commit()
 }

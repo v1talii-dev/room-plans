@@ -1,9 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { selectedItem, selectedOpening, selection } from '@/entities/plan'
+import { plural } from '@/shared/lib'
+import { clearSelection, isMultiActive, multiSelection, removeSelected, selectedItem, selectedOpening, selection } from '@/entities/plan'
 import { AddItemGrid } from '@/features/add-item'
 import { CreateItemButton } from '@/features/create-item'
-import { ItemEditor } from '@/features/edit-item'
+import { ItemEditor, duplicateSelected, rotateSelected } from '@/features/edit-item'
 import { OpeningEditor } from '@/features/edit-opening'
 import { RoomSettings } from '@/features/edit-room'
 import { ObjectList } from '@/features/select-object'
@@ -26,7 +27,18 @@ watch(selKey, (key, prev) => {
 <template>
   <aside ref="panel" class="panel">
     <section class="sec sel" :class="{ active: !!selection }">
-      <ItemEditor v-if="selectedItem" :key="'i' + selectedItem.id" :item="selectedItem" />
+      <template v-if="isMultiActive">
+        <h2>Выделено {{ multiSelection.length }} {{ plural(multiSelection.length, 'предмет', 'предмета', 'предметов') }}</h2>
+        <p class="hint">Перетащите любой из них на плане — вся группа сдвинется вместе. Shift или Ctrl+клик добавляет и убирает предметы из выделения.</p>
+        <div class="btnrow">
+          <button class="btn sm" @click="rotateSelected(-90)">↺ 90°</button>
+          <button class="btn sm" @click="rotateSelected(90)">↻ 90°</button>
+          <button class="btn sm" @click="duplicateSelected">Дублировать</button>
+          <button class="btn sm danger" @click="removeSelected">Удалить</button>
+          <button class="btn sm" @click="clearSelection">Снять выделение</button>
+        </div>
+      </template>
+      <ItemEditor v-else-if="selectedItem" :key="'i' + selectedItem.id" :item="selectedItem" />
       <OpeningEditor v-else-if="selectedOpening" :key="'o' + selectedOpening.id" :opening="selectedOpening" />
       <HelpSection v-else />
     </section>

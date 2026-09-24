@@ -1,12 +1,13 @@
-export const STORE_KEY = 'nail-room-plan-v1'
+export const STORE_KEY = 'nail-room-plan-v1' // старый ключ одиночного черновика — оставлен для миграции
+export const ROOMS_KEY = 'nail-room-plan-rooms-v1'
 export const T = 12 // условная толщина стен на чертеже, см
 export const PADPX = 22
 export const FONT_DRAW = "'IBM Plex Sans Condensed','Roboto Condensed','Arial Narrow',Arial,sans-serif"
 
 export const KINDS = {
-  table: { label: 'Стол маникюрный', w: 120, d: 50, tone: 'work' },
-  master: { label: 'Стул мастера', w: 55, d: 55, tone: 'seat' },
-  client: { label: 'Стул клиента', w: 50, d: 50, tone: 'seat' },
+  table: { label: 'Стол', w: 120, d: 50, tone: 'work' },
+  master: { label: 'Стул', w: 50, d: 50, tone: 'seat' },
+  client: { label: 'Стул', w: 50, d: 50, tone: 'seat' },
   armchair: { label: 'Кресло', w: 65, d: 65, tone: 'lounge' },
   coffee: { label: 'Журнальный столик', w: 44, d: 44, tone: 'lounge', round: true },
   dresser: { label: 'Комод', w: 120, d: 39, tone: 'storage' },
@@ -18,7 +19,7 @@ export const KINDS = {
 }
 
 export const PRESETS = [
-  { kind: 'table' }, { kind: 'master' }, { kind: 'client' }, { kind: 'armchair' },
+  { kind: 'table' }, { kind: 'client' }, { kind: 'armchair' },
   { kind: 'coffee' }, { kind: 'cooler' }, { kind: 'dresser', w: 120, d: 39 }, { kind: 'dresser', w: 70, d: 35 },
   { kind: 'cabinet' }, { kind: 'rack' }, { kind: 'box' }, { kind: 'circle' },
 ]

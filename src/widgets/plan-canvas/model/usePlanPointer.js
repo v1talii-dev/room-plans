@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { clamp, fmt } from '@/shared/lib'
 import {
   WALLS, clampInside, clearSelection, commit, doResize, getItem, getOpening, guides, localOf,
-  plan, restore, select, selection, snapMove, snapshot, wallLenOf,
+  multiSelection, plan, restore, select, selection, snapMove, snapshot, toggleMultiSelect, wallLenOf,
 } from '@/entities/plan'
 import { settings } from '@/entities/settings'
 import { scale, setZoom, zoom } from '@/features/zoom-plan'
@@ -55,10 +55,23 @@ export function usePlanPointer(svgRef, vpRef) {
     } else if (ie) {
       const it = getItem(ie.dataset.id)
       if (it) {
-        select('i', it.id)
-        drag = it.locked
-          ? { ...base, mode: 'pan', sl: vp.scrollLeft, st: vp.scrollTop, keep: true }
-          : { ...base, mode: 'move', id: it.id, gx: Pt[0] - it.x, gy: Pt[1] - it.y }
+        const modifier = e.shiftKey || e.ctrlKey || e.metaKey
+        if (modifier) {
+          // Shift/Ctrl+клик: только переключить членство в групповом выделении, без перетаскивания.
+          // Отдельный режим 'none' — иначе клик провалится в pan и снимет только что поставленное выделение.
+          toggleMultiSelect(it.id)
+          drag = { ...base, mode: 'none' }
+        } else if (multiSelection.value.includes(it.id) && multiSelection.value.length > 1) {
+          // Клик по предмету, уже входящему в группу: тащим всю группу вместе
+          const starts = new Map(multiSelection.value.map((id) => { const o = getItem(id); return [id, { x: o.x, y: o.y }] }))
+          selection.value = { t: 'i', id: it.id }
+          drag = { ...base, mode: 'move-group', id: it.id, gx: Pt[0] - it.x, gy: Pt[1] - it.y, starts }
+        } else {
+          select('i', it.id)
+          drag = it.locked
+            ? { ...base, mode: 'pan', sl: vp.scrollLeft, st: vp.scrollTop, keep: true }
+            : { ...base, mode: 'move', id: it.id, gx: Pt[0] - it.x, gy: Pt[1] - it.y }
+        }
       }
     } else if (oe) {
       const op = getOpening(oe.dataset.oid)
@@ -100,6 +113,20 @@ export function usePlanPointer(svgRef, vpRef) {
       const r = snapMove(plan.value, it, Pt[0] - drag.gx, Pt[1] - drag.gy, { snap: settings.snap && !alt, step: settings.step, scale: scale.value })
       it.x = r.cx
       it.y = r.cy
+      guides.value = r.g
+      return
+    }
+    if (drag.mode === 'move-group') {
+      const primary = getItem(drag.id)
+      if (!primary) return
+      const r = snapMove(plan.value, primary, Pt[0] - drag.gx, Pt[1] - drag.gy, { snap: settings.snap && !alt, step: settings.step, scale: scale.value })
+      const s0 = drag.starts.get(drag.id), dx = r.cx - s0.x, dy = r.cy - s0.y
+      for (const [id, s] of drag.starts) {
+        const o = getItem(id)
+        if (!o || o.locked) continue
+        o.x = s.x + dx
+        o.y = s.y + dy
+      }
       guides.value = r.g
       return
     }

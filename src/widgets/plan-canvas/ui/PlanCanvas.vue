@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { n2, plural } from '@/shared/lib'
-import { guides, issues, palette, plan, planMarkup, select, selection, summarize, viewBox } from '@/entities/plan'
+import { guides, issues, multiSelection, palette, plan, planMarkup, select, selection, summarize, viewBox } from '@/entities/plan'
 import { settings } from '@/entities/settings'
 import { scale, setZoom, svgEl, viewportEl, viewportSize, zoom } from '@/features/zoom-plan'
 import { usePlanPointer } from '../model/usePlanPointer.js'
@@ -13,7 +13,7 @@ const { dragging, cursorText, onPointerDown, onPointerMove, onPointerUp, onPoint
 const vb = computed(() => viewBox(plan.value, scale.value))
 const markup = computed(() => planMarkup(plan.value, {
   pal: palette.value, s: scale.value, interactive: true, sel: selection.value, issues: issues.value,
-  grid: settings.grid, labels: settings.labels, dims: settings.dims, guides: guides.value,
+  grid: settings.grid, labels: settings.labels, dims: settings.dims, guides: guides.value, multiIds: multiSelection.value,
 }))
 
 const summary = computed(() => summarize(issues.value))

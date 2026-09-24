@@ -38,20 +38,7 @@ function drawKind(kind, hw, hd, t, o) {
   switch (kind) {
     case 'table':
       return rect(-hw, -hd, w, d, 1.5, base) + (w > 12 && d > 12 ? rect(-hw + 3, -hd + 3, w - 6, d - 6, 1, `fill="none" stroke="${S}" stroke-opacity=".35" stroke-width="${thin}"`) : '')
-    case 'master': {
-      const r = Math.min(hw, hd)
-      let m = rect(-hw, -hd, w, d, r * 0.25, `fill="none" stroke="${S}" stroke-opacity=".35" stroke-width="${thin}" stroke-dasharray="${k(3)} ${k(3)}"`)
-      let legs = '', wheels = ''
-      for (let i = 0; i < 5; i++) {
-        const a = rad(-90 + i * 72), x = Math.cos(a) * r * 0.9, y = Math.sin(a) * r * 0.9
-        legs += `M0 0L${n2(x)} ${n2(y)}`
-        wheels += `<circle cx="${n2(x)}" cy="${n2(y)}" r="${n2(Math.min(2.4, r * 0.09))}" fill="${S}" fill-opacity=".7"/>`
-      }
-      m += `<path d="${legs}" stroke="${S}" stroke-opacity=".5" stroke-width="${k(2)}" stroke-linecap="round" fill="none"/>` + wheels
-      m += rect(-hw * 0.7, -hd * 0.5, hw * 1.4, hd * 1.25, Math.min(8, r * 0.3), base)
-      m += rect(-hw * 0.62, -hd * 0.88, hw * 1.24, hd * 0.28, Math.min(4, r * 0.15), `fill="${S}" fill-opacity=".85"`)
-      return m
-    }
+    case 'master':
     case 'client':
       return rect(-hw, -hd, w, d, Math.min(4, w / 4), base) + rect(-hw + 2, -hd + 2, w - 4, Math.min(8, d * 0.18), 3, `fill="${S}" fill-opacity=".85"`)
     case 'armchair': {
@@ -239,18 +226,27 @@ function selMarkup(it, o) {
   const oa = `fill="none" stroke="${it.locked ? P.dim : P.accent}" stroke-width="${k(1.6)}"${it.locked ? ` stroke-dasharray="${k(4)} ${k(3)}"` : ''}`
   m += round ? `<circle r="${n2(hw + pad)}" ${oa}/>` : rect(-hw - pad, -hd - pad, it.w + 2 * pad, it.d + 2 * pad, k(2), oa)
   if (!it.locked) {
-    const hs = k(9), hit = k(22)
+    // Видимая ручка маленькая (hs), а её зона касания (hit) — крупнее, под палец
+    const hs = k(9), hit = k(32)
     const hdl = (name, x, y) => `<g data-handle="${name}" data-id="${id}"><rect x="${n2(x - hit / 2)}" y="${n2(y - hit / 2)}" width="${n2(hit)}" height="${n2(hit)}" fill="transparent"/><rect x="${n2(x - hs / 2)}" y="${n2(y - hs / 2)}" width="${n2(hs)}" height="${n2(hs)}" rx="${k(2)}" fill="${P.floor}" stroke="${P.accent}" stroke-width="${k(1.6)}"/></g>`
     if (round) {
       m += hdl('r', hw + pad, 0)
     } else {
       const X = hw + pad, Y = hd + pad, ry = -Y - k(28)
       m += `<path d="M0 ${n2(-Y)}V${n2(ry)}" stroke="${P.accent}" stroke-width="${k(1.3)}"/>`
-      m += `<g data-handle="rot" data-id="${id}"><circle cy="${n2(ry)}" r="${k(14)}" fill="transparent"/><circle cy="${n2(ry)}" r="${k(6.5)}" fill="${P.accent}" stroke="${P.floor}" stroke-width="${k(1.5)}"/></g>`
+      m += `<g data-handle="rot" data-id="${id}"><circle cy="${n2(ry)}" r="${k(18)}" fill="transparent"/><circle cy="${n2(ry)}" r="${k(6.5)}" fill="${P.accent}" stroke="${P.floor}" stroke-width="${k(1.5)}"/></g>`
       m += hdl('e', X, 0) + hdl('w', -X, 0) + hdl('s', 0, Y) + hdl('n', 0, -Y) + hdl('ne', X, -Y) + hdl('nw', -X, -Y) + hdl('se', X, Y) + hdl('sw', -X, Y)
     }
   }
   return m + '</g>'
+}
+
+/** Пунктирная рамка группового выделения — без ручек, для всех предметов группы, кроме основного. */
+function groupHighlight(it, o) {
+  const P = o.pal, k = mkK(o.s), hw = it.w / 2, hd = it.d / 2, round = isRound(it), pad = k(4)
+  const oa = `fill="none" stroke="${P.accent}" stroke-width="${k(1.6)}" stroke-dasharray="${k(3)} ${k(2.5)}"`
+  const box = round ? `<circle r="${n2(hw + pad)}" ${oa}/>` : rect(-hw - pad, -hd - pad, it.w + 2 * pad, it.d + 2 * pad, k(2), oa)
+  return `<g transform="translate(${n2(it.x)} ${n2(it.y)}) rotate(${n2(it.rot)})">${box}</g>`
 }
 
 /** Поля вокруг комнаты (см): место под размерные линии и двери наружу. */
@@ -293,7 +289,10 @@ export function planMarkup(st, opts) {
     const gd = o.guides
     if (gd && gd.x != null) m += `<path d="M${n2(gd.x)} 0V${H}" stroke="${P.accent}" stroke-width="${k(1)}" stroke-dasharray="${k(4)} ${k(3)}"/>`
     if (gd && gd.y != null) m += `<path d="M0 ${n2(gd.y)}H${W}" stroke="${P.accent}" stroke-width="${k(1)}" stroke-dasharray="${k(4)} ${k(3)}"/>`
-    if (sIt) {
+    const multiIds = o.multiIds && o.multiIds.length > 1 ? new Set(o.multiIds) : null
+    if (multiIds) {
+      for (const it of st.items) if (multiIds.has(it.id)) m += groupHighlight(it, o)
+    } else if (sIt) {
       if (o.dims) m += distMarkup(sIt, o)
       m += selMarkup(sIt, o)
     }

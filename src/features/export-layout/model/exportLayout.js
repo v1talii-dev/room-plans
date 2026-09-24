@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { download, fmt, n2, toast } from '@/shared/lib'
-import { FONT_DRAW, PAL, computeIssues, mkK, plan, planMarkup, replacePlan, validState, viewBox } from '@/entities/plan'
+import { download, esc, fmt, n2, toast } from '@/shared/lib'
+import { FONT_DRAW, PAL, activeRoomName, computeIssues, mkK, plan, planMarkup, replacePlan, validState, viewBox } from '@/entities/plan'
 import { settings } from '@/entities/settings'
 
 export const exportOpen = ref(false)
@@ -20,7 +20,7 @@ export function exportSVG(mode) {
     fsName: mode === 'png' ? 12 : 9, fsDim: mode === 'png' ? 11 : 8,
   })
   const ty = vb.y + vb.h, W = st.room.w, H = st.room.h, x0 = vb.x + k(18), x1 = vb.x + vb.w - k(18)
-  let t = `<text x="${n2(x0)}" y="${n2(ty + k(26))}" font-family="${FONT_DRAW}" font-size="${k(16)}" font-weight="600" fill="${P.text}">Кабинет маникюра, ${fmt(W)} × ${fmt(H)} см</text>`
+  let t = `<text x="${n2(x0)}" y="${n2(ty + k(26))}" font-family="${FONT_DRAW}" font-size="${k(16)}" font-weight="600" fill="${P.text}">${esc(activeRoomName.value)}, ${fmt(W)} × ${fmt(H)} см</text>`
   t += `<text x="${n2(x0)}" y="${n2(ty + k(47))}" font-family="${FONT_DRAW}" font-size="${k(11)}" fill="${P.dim}">${mode === 'print' ? 'Масштаб 1:50. ' : ''}Размеры в сантиметрах, клетка сетки 10 см.</text>`
   const bx = x1 - 100, by = ty + k(30)
   t += `<path d="M${n2(bx)} ${n2(by)}H${n2(x1)}M${n2(bx)} ${n2(by - k(5))}V${n2(by + k(5))}M${n2(bx + 50)} ${n2(by - k(3))}V${n2(by + k(3))}M${n2(x1)} ${n2(by - k(5))}V${n2(by + k(5))}" stroke="${P.text}" stroke-width="${k(1.4)}" fill="none"/>`
@@ -32,8 +32,13 @@ export function exportSVG(mode) {
   return { svg: out, w: Math.round(vb.w * s), h: Math.round(th * s) }
 }
 
+function fileSlug() {
+  const s = activeRoomName.value.toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '-').replace(/^-+|-+$/g, '')
+  return s || 'komnata'
+}
+
 export function downloadSVG() {
-  download('plan-kabineta-1-50.svg', exportSVG('print').svg, 'image/svg+xml')
+  download(`plan-${fileSlug()}-1-50.svg`, exportSVG('print').svg, 'image/svg+xml')
 }
 
 export async function downloadPNG() {
@@ -54,14 +59,14 @@ export async function downloadPNG() {
     ctx.drawImage(img, 0, 0, c.width, c.height)
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'))
     if (!blob) throw new Error('png')
-    download('plan-kabineta.png', blob)
+    download(`plan-${fileSlug()}.png`, blob)
   } catch (e) {
     toast('Не получилось подготовить картинку. Попробуйте чертёж SVG.')
   }
 }
 
 export function downloadJSON() {
-  download('rasstanovka-kabineta.json', JSON.stringify(plan.value, null, 2), 'application/json')
+  download(`rasstanovka-${fileSlug()}.json`, JSON.stringify(plan.value, null, 2), 'application/json')
 }
 
 /** Загрузить расстановку из текста JSON. Принимает и {state, savedAt}, и голое состояние. */

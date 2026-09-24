@@ -1,18 +1,22 @@
 <script setup>
 import { fmt } from '@/shared/lib'
-import { WALL_NAMES, dimsText, issues, palette, plan, select, selection } from '@/entities/plan'
+import { WALL_NAMES, dimsText, issues, multiSelection, palette, plan, select, selection, toggleMultiSelect } from '@/entities/plan'
 
-const isOn = (t, id) => !!selection.value && selection.value.t === t && selection.value.id === id
+const isOn = (t, id) => (t === 'i' && multiSelection.value.length > 1 ? multiSelection.value.includes(id) : !!selection.value && selection.value.t === t && selection.value.id === id)
 function hasIssue(id) {
   const r = issues.value.get(id)
   return !!(r && (r.overlap.length || r.out || r.door))
+}
+function onItemClick(e, id) {
+  if (e.shiftKey || e.ctrlKey || e.metaKey) toggleMultiSelect(id)
+  else select('i', id)
 }
 </script>
 
 <template>
   <ul class="list">
     <li v-for="it in plan.items" :key="'i' + it.id">
-      <button class="row" :class="{ on: isOn('i', it.id) }" @click="select('i', it.id)">
+      <button class="row" :class="{ on: isOn('i', it.id) }" @click="onItemClick($event, it.id)">
         <span class="sw" :style="{ background: palette.tones[it.tone].f, borderColor: palette.tones[it.tone].s }" />
         <span class="nm">{{ it.name }} <span v-if="it.locked" class="lk">закреплён</span></span>
         <span class="dm">{{ dimsText(it) }}</span>

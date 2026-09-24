@@ -1,14 +1,23 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { clamp, isModalOpen } from '@/shared/lib'
 import {
-  clampInside, clearSelection, commitSoon, plan, redo, removeSelected, selectedItem, selectedOpening, selection, undo, wallLenOf,
+  clampInside, clearSelection, commitSoon, getItem, isMultiActive, multiSelection,
+  plan, redo, removeSelected, selectedItem, selectedOpening, selection, undo, wallLenOf,
 } from '@/entities/plan'
 import { duplicateSelected, rotateSelected } from '@/features/edit-item'
 
-/** Сдвиг выбранного предмета или проёма стрелками (история пишется с задержкой). */
+/** Сдвиг выбранного предмета, группы или проёма стрелками (история пишется с задержкой). */
 function nudge(dx, dy) {
   const it = selectedItem.value, op = selectedOpening.value
-  if (it) {
+  if (isMultiActive.value) {
+    for (const id of multiSelection.value) {
+      const o = getItem(id)
+      if (!o || o.locked) continue
+      o.x += dx
+      o.y += dy
+      clampInside(plan.value.room, o)
+    }
+  } else if (it) {
     if (it.locked) return
     it.x += dx
     it.y += dy
