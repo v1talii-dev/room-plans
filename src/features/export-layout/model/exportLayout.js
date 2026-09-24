@@ -7,17 +7,21 @@ export const exportOpen = ref(false)
 export const openExport = () => { exportOpen.value = true }
 export const closeExport = () => { exportOpen.value = false }
 
+// Во сколько раз растеризуем PNG плотнее, чем на экране (как retina-скриншот): пропорции
+// те же самые, что видно на странице, но пикселей больше — края и подписи чётче.
+const RASTER_QUALITY = 3
+
 /**
  * Самодостаточный SVG чертежа — та же тема, сетка и размер подписей, что и на экране.
- * liveScale — текущий масштаб плана на странице (px на см, из features/zoom-plan): используем его же
- * для экспорта, чтобы мебель и подписи были пиксель-в-пиксель такими же, как в интерактивном виде,
- * а не пересчитывались под отдельный «под печать» размер картинки. Ограничиваем сверху только на случай
- * экстремального зума, чтобы не растеризовать в канвас за пределами разумного.
+ * s — масштаб растра (px на см). Обычно это текущий масштаб плана на странице (из features/zoom-plan),
+ * умноженный на RASTER_QUALITY, чтобы мебель и подписи были в тех же пропорциях, что в интерактивном
+ * виде, но с более плотной растеризацией. Ограничиваем сверху только на случай экстремального зума,
+ * чтобы не растеризовать в канвас за пределами разумного.
  */
-export function exportSVG(liveScale) {
+export function exportSVG(s) {
   const st = plan.value, P = palette.value
   const p = padsCm(st), cw = st.room.w + p.l + p.r, ch = st.room.h + p.t + p.b
-  const s = clamp(liveScale, 0.05, 6000 / Math.max(cw, ch))
+  s = clamp(s, 0.05, 10000 / Math.max(cw, ch))
   const k = mkK(s), vb = viewBox(st, s), titleH = +(70 / s).toFixed(2)
   const inner = planMarkup(st, {
     pal: P, s, interactive: false, sel: null, issues: computeIssues(st), grid: settings.grid, labels: settings.labels, dims: false, guides: null,
@@ -40,7 +44,7 @@ function fileSlug() {
 
 export async function downloadPNG(liveScale) {
   try {
-    const r = exportSVG(liveScale)
+    const r = exportSVG(liveScale * RASTER_QUALITY)
     const img = new Image()
     await new Promise((res, rej) => {
       img.onload = res
