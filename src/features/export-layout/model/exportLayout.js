@@ -7,14 +7,17 @@ export const exportOpen = ref(false)
 export const openExport = () => { exportOpen.value = true }
 export const closeExport = () => { exportOpen.value = false }
 
-/** Самодостаточный SVG чертежа — та же тема, сетка и размер подписей, что и на экране. */
-export function exportSVG() {
+/**
+ * Самодостаточный SVG чертежа — та же тема, сетка и размер подписей, что и на экране.
+ * liveScale — текущий масштаб плана на странице (px на см, из features/zoom-plan): используем его же
+ * для экспорта, чтобы мебель и подписи были пиксель-в-пиксель такими же, как в интерактивном виде,
+ * а не пересчитывались под отдельный «под печать» размер картинки. Ограничиваем сверху только на случай
+ * экстремального зума, чтобы не растеризовать в канвас за пределами разумного.
+ */
+export function exportSVG(liveScale) {
   const st = plan.value, P = palette.value
-  // Масштаб подбираем так, чтобы комната с полями уместилась в разумный размер картинки —
-  // тогда подписи (дефолтные 11.5/10.5, как в интерфейсе) выглядят той же величины
-  // относительно мебели, что и на экране, а не превращаются в точки на огромном холсте.
   const p = padsCm(st), cw = st.room.w + p.l + p.r, ch = st.room.h + p.t + p.b
-  const s = clamp(1600 / Math.max(cw, ch), 1, 8)
+  const s = clamp(liveScale, 0.05, 6000 / Math.max(cw, ch))
   const k = mkK(s), vb = viewBox(st, s), titleH = +(70 / s).toFixed(2)
   const inner = planMarkup(st, {
     pal: P, s, interactive: false, sel: null, issues: computeIssues(st), grid: settings.grid, labels: settings.labels, dims: false, guides: null,
@@ -35,9 +38,9 @@ function fileSlug() {
   return s || 'komnata'
 }
 
-export async function downloadPNG() {
+export async function downloadPNG(liveScale) {
   try {
-    const r = exportSVG()
+    const r = exportSVG(liveScale)
     const img = new Image()
     await new Promise((res, rej) => {
       img.onload = res

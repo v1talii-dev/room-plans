@@ -5,8 +5,14 @@ import { ModalDialog } from '@/shared/ui'
 import { plan } from '@/entities/plan'
 import { closeExport, downloadJSON, downloadPNG, loadFromText } from '../model/exportLayout.js'
 
+const props = defineProps({ scale: { type: Number, required: true } })
+
 const text = ref(JSON.stringify(plan.value))
 const box = ref(null)
+
+function exportPng() {
+  downloadPNG(props.scale)
+}
 
 async function copy() {
   try {
@@ -30,7 +36,7 @@ async function copy() {
     <h3>Экспорт и импорт</h3>
     <p class="hint">Чертёж с размерами и подписями предметов картинкой — удобно отправить в мессенджер или распечатать.</p>
     <div class="btnrow">
-      <button class="btn" @click="downloadPNG">Скачать чертёж PNG</button>
+      <button class="btn" @click="exportPng">Скачать чертёж PNG</button>
     </div>
     <h4>Файл расстановки</h4>
     <p class="hint">Скопируйте текст, чтобы сохранить расстановку у себя, или вставьте сохранённый ранее и нажмите «Загрузить».</p>

@@ -7,6 +7,7 @@ import { ExportDialog, exportOpen } from '@/features/export-layout'
 import { VariantDialog, pendingVariant } from '@/features/apply-variant'
 import { CreateItemDialog, createOpen } from '@/features/create-item'
 import { RoomsDialog, roomsOpen } from '@/features/manage-rooms'
+import { scale } from '@/features/zoom-plan'
 import { useHotkeys } from '../lib/useHotkeys.js'
 
 useHotkeys()
@@ -19,7 +20,7 @@ useHotkeys()
       <PlanCanvas />
       <SidePanel />
     </main>
-    <ExportDialog v-if="exportOpen" />
+    <ExportDialog v-if="exportOpen" :scale="scale" />
     <VariantDialog v-else-if="pendingVariant" />
     <CreateItemDialog v-else-if="createOpen" />
     <RoomsDialog v-else-if="roomsOpen" />
