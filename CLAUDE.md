@@ -4,31 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-file, dependency-free web app: an interactive floor-plan editor for a nail salon room (UI text and code comments are in Russian). Everything — CSS, HTML template, saved layout data, and JS — lives in `index.html`. There is no build step, package manager, linter, or test suite; open `index.html` in a browser (or serve the folder statically) to run it. The only external resource is Google Fonts.
+An interactive floor-plan editor for a nail salon room, built with Vue 3 + Vite (plain JS, no TypeScript). UI text and code comments are in Russian. The only external resource at runtime is Google Fonts.
 
-## File layout (`index.html`)
+## Commands
 
-The file is split into four tagged blocks, and **the IDs matter** because the app re-serializes itself (see "Save to link" below):
+Node version is pinned in `.nvmrc` (24.14.0). nvm-windows 1.1.x does not read `.nvmrc`, so run `nvm use 24.14.0` there. Newer nvm, nvm-windows and fnm pick it up with a plain `nvm use`.
 
-- `<style id="app-css">` — all styles. Theme colors are CSS tokens on `:root`, with dark mode defined twice: under `@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme="light"])`, and under `:root[data-theme="dark"]`. Keep both in sync.
-- `<template id="app-tpl">` — the app markup, cloned into `#app` at startup.
-- `<script type="application/json" id="saved-layout">` — the embedded, published layout (`{state, savedAt}`).
-- `<script id="app-js">` — the whole app in one IIFE.
+- `npm run dev` — dev server
+- `npm run build` — production build into `dist/`
+- `npm run preview` — serve the built `dist/`
+- `npm run deploy` — build, then push `dist/` to the `gh-pages` branch via the `gh-pages` package. GitHub Pages must be set to serve from the `gh-pages` branch, root.
 
-## Architecture (app-js)
+There is no linter or test suite. `vite.config.js` uses `base: './'`, so the build works under any Pages sub-path. `@` is aliased to `src/`.
 
-- **State model**: `state = {room:{w,h}, items:[], openings:[]}`, all units in centimeters. Items have center `x,y`, size `w`×`d`, `rot` (degrees), `kind` (key into `KINDS`), `tone` (color group). Openings (doors/windows) are positioned by `wall` + `offset` + `width`. Any externally loaded state must go through `normalize()` (clamps, defaults, dedupes IDs); `validState()` is the gate.
-- **Load priority**: localStorage draft (`nail-room-plan-v1`) wins if newer than the embedded `saved-layout.savedAt`; otherwise the embedded layout; otherwise `defaultState()` (variants `a`/`b` in `VARIANTS`). UI toggles persist separately under `nail-room-plan-ui-v1`.
-- **History**: undo/redo stores JSON snapshots (`hist`, max 200). Mutations call `commit()` (or `commitSoon()` for debounced text input), which also triggers `saveDraftSoon()`.
-- **Rendering**: the plan is an SVG rebuilt as a string each render (`planMarkup()` and the `*Markup` helpers). SVG user units are cm; `mkK(scale)` converts screen-pixel sizes (strokes, fonts) into cm so they stay constant on screen. `renderAll()` redraws everything; `requestRender()` is the rAF-throttled path used during drag. Colors for SVG come from the JS `PAL.light/dark` palettes (not CSS vars), chosen by `isDark()`, and the app re-renders on theme change.
-- **Geometry/validation**: `poly()`/`aabb()`/`ext()` handle rotated items; `overlapSAT()` does collision checks; `computeIssues()` flags overlaps, items outside walls, and items inside an inward door swing sector (`sectorPoly()`). Results drive highlighting and the status bar.
-- **Interaction**: pointer drag with snapping to walls/neighbors/grid (`snapMove()`, Alt disables), resize handles (`doResize()`), keyboard shortcuts, and zoom (`setZoom()`). Side-panel inputs are wired via `data-f` (selected item/opening fields → `applyField()`), `data-r` (room → `applyRoom()`), and `data-a`/`data-act` action attributes.
-- **Export**: SVG/PNG export always renders with `PAL.light`; JSON copy/load goes through `normalize()`.
+## Architecture: Feature-Sliced Design
 
-## Save to link (self-republishing)
+Layers in `src/`. A layer imports only from layers below it, and only through a slice's public `index.js`:
 
-When hosted as a claude.ai artifact, `window.claude.use('artifact')` enables the "Сохранить" button. `saveToLink()` calls `buildPageHTML()`, which reconstructs the **entire page** from the live `#app-css`, `#app-tpl`, and `#app-js` contents plus a fresh `saved-layout` JSON, then publishes it. Consequences:
+`app` → `pages` → `widgets` → `features` → `entities` → `shared`
 
-- Anything outside those blocks is lost on save. `headHTML()` hardcodes the `<head>` (title, fonts) — update it if you change the real `<head>`.
-- The `saved-layout` block in the repo is data written by the app; editing it by hand changes the default published layout.
-- `window.claude.use('downloads')` is used for file downloads; outside the artifact host, downloading shows a toast instead.
+- **shared/** — generic, domain-free code. `lib/` has number formatting (`fmt`, `num`), `isDark` theme ref, `toast`, `download`, and the modal-open counter. `ui/` has `SyncInput`, `NumField`, `ModalDialog` and `AppToast`.
+- **entities/plan/** — the core domain.
+  - `config/catalog.js`: `KINDS`, `PRESETS`, `TONES`, `PAL` palettes and other constants.
+  - `config/saved-layout.json`: the default published layout (`{state, savedAt}`).
+  - `lib/state.js`: `normalize`, `validState` and `defaultState` variants `a`/`b`.
+  - `lib/geometry.js`: pure geometry, collisions (`overlapSAT`, `computeIssues`), snapping and resize.
+  - `lib/markup.js`: SVG string rendering (`planMarkup`, `viewBox`).
+  - `model/plan.js`: the reactive `plan` ref, `selection`, `guides`, `issues`, `palette`, and undo/redo history (`commit`, `commitSoon`, `undo`, `redo`, `replacePlan`, `removeSelected`).
+- **entities/settings/** — display/snap toggles persisted in localStorage (`nail-room-plan-ui-v1`).
+- **features/** — one user action per slice: `history`, `toggle-display`, `zoom-plan` (owns viewport/svg refs, `zoom`, computed `scale`, `setZoom`), `add-item`, `edit-item`, `edit-opening`, `edit-room`, `select-object`, `export-layout` (PNG/SVG 1:50/JSON), `apply-variant`.
+- **widgets/** — `toolbar`, `plan-canvas` (SVG + pointer drag/resize/rotate/pan/pinch in `model/usePlanPointer.js`, plus the status bar), `side-panel`.
+- **pages/plan-editor/** — composes the widgets and dialogs; keyboard shortcuts live in `lib/useHotkeys.js`.
+- **app/** — `createApp`, global styles (`styles/index.css`).
+
+## Key conventions
+
+- **State model**: `plan = {room:{w,h}, items:[], openings:[]}`, all units cm. Items have center `x,y`, size `w`×`d`, `rot` in degrees, `kind` and `tone`. Openings are positioned by `wall` + `offset` + `width`. Any external state goes through `normalize()`, and `validState()` is the gate.
+- **Mutations**: mutate `plan.value` in place, then call `commit()`, or `commitSoon()` for keyboard nudges. Commit also saves the draft to localStorage (`nail-room-plan-v1`). On load, the draft wins only if it is newer than `saved-layout.json`'s `savedAt`.
+- **Rendering**: the plan is an SVG string, a `computed` fed to `v-html`, so the same code serves interactive view and export. SVG units are cm; `mkK(scale)` converts screen px to cm for strokes and fonts. SVG colors come from `PAL.light/dark` (via `palette`), not CSS vars. Export always uses `PAL.light`.
+- **Theme CSS**: tokens on `:root`, with dark mode defined twice: under `@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme="light"])`, and under `:root[data-theme="dark"]`. Keep both in sync.
+- **Panel inputs** use `SyncInput`, which applies on change/Enter, then re-shows the model value. That reverts invalid input and shows formatted numbers.
