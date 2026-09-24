@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { toast } from '@/shared/lib'
 import { ModalDialog } from '@/shared/ui'
 import { plan } from '@/entities/plan'
-import { closeExport, downloadJSON, downloadPNG, downloadSVG, loadFromText } from '../model/exportLayout.js'
+import { closeExport, downloadJSON, downloadPNG, loadFromText } from '../model/exportLayout.js'
 
 const text = ref(JSON.stringify(plan.value))
 const box = ref(null)
@@ -28,10 +28,9 @@ async function copy() {
 <template>
   <ModalDialog @close="closeExport">
     <h3>Экспорт и импорт</h3>
-    <p class="hint">Оба файла — один и тот же чертёж с размерами и подписями предметов, отличается только формат. PNG удобно отправить в мессенджер. SVG — векторный чертёж в масштабе 1:50: если распечатать его в масштабе 100%, 1 см на листе равен 50 см комнаты.</p>
+    <p class="hint">Чертёж с размерами и подписями предметов картинкой — удобно отправить в мессенджер или распечатать.</p>
     <div class="btnrow">
       <button class="btn" @click="downloadPNG">Скачать чертёж PNG</button>
-      <button class="btn" @click="downloadSVG">Скачать чертёж SVG (1:50)</button>
     </div>
     <h4>Файл расстановки</h4>
     <p class="hint">Скопируйте текст, чтобы сохранить расстановку у себя, или вставьте сохранённый ранее и нажмите «Загрузить».</p>

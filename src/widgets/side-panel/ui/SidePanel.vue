@@ -9,7 +9,6 @@ import { OpeningEditor } from '@/features/edit-opening'
 import { RoomSettings } from '@/features/edit-room'
 import { ObjectList } from '@/features/select-object'
 import { VariantButtons } from '@/features/apply-variant'
-import { openExport } from '@/features/export-layout'
 import HelpSection from './HelpSection.vue'
 
 const panel = ref(null)
@@ -58,10 +57,9 @@ watch(selKey, (key, prev) => {
     </section>
     <section class="sec">
       <h2>Расстановка</h2>
-      <p class="hint">Изменения сохраняются в этом браузере автоматически. Чтобы перенести план на другое устройство, воспользуйтесь экспортом.</p>
+      <p class="hint">Изменения сохраняются в этом браузере автоматически. Чтобы перенести план на другое устройство, воспользуйтесь кнопкой «Экспорт и импорт» вверху.</p>
       <div class="btnrow">
         <VariantButtons />
-        <button class="btn sm" @click="openExport">Экспорт и импорт</button>
       </div>
     </section>
   </aside>

@@ -21,7 +21,7 @@ import { openRooms } from '@/features/manage-rooms'
       <HistoryButtons />
       <DisplayToggles />
       <ZoomControls />
-      <button class="btn" @click="openExport">Экспорт</button>
+      <button class="btn" @click="openExport">Экспорт и импорт</button>
     </div>
   </header>
 </template>
